@@ -1,0 +1,49 @@
+# Dart & Flutter
+.dart_tool/
+.flutter-plugins-dependencies
+build/
+*.lock
+pubspec.lock
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+*.iml
+local.properties
+
+# VS Code
+.vscode/
+
+# macOS
+*.DS_Store
+
+# Linux
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Other
+.idea/
+*.bak
+*.tmp
+
+# Docker
+.dockerignore
+
+# Generated files
+**/generated/
+**/intermediates/
+**/outputs/
+**/tmp/
+
+# Reports
+build/reports/
+
+# Native assets
+build/native_assets/
+
+# Misc
+.env

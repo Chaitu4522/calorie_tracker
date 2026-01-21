@@ -1,0 +1,49 @@
+name: calorie_tracker
+description: A minimal calorie tracking app with AI-powered estimation using Google Gemini.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Local storage
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  
+  # Secure storage for API key
+  flutter_secure_storage: ^9.0.0
+  
+  # State management
+  provider: ^6.1.1
+  
+  # Image handling
+  image_picker: ^1.0.7
+  
+  # HTTP for API calls
+  http: ^1.2.0
+  
+  # Charts for weekly view
+  fl_chart: ^0.66.0
+  
+  # Date formatting
+  intl: ^0.18.1
+  
+  # URL launcher for API key guide
+  url_launcher: ^6.2.4
+  
+  # File sharing and path utilities
+  share_plus: ^7.2.1
+  path_provider: ^2.1.2
+  file_picker: ^8.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true

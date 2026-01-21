@@ -1,0 +1,42 @@
+# docker-compose.yml
+# Flutter development environment using pre-built image
+#
+# Usage:
+#   docker compose run --rm flutter bash    # Start shell
+#   docker compose run --rm flutter flutter build apk --release
+#   docker compose down -v                  # Clean up everything
+
+services:
+  # Service name - use this in commands
+  flutter:
+    # Pre-built Flutter image with Android SDK included
+    image: ghcr.io/cirruslabs/flutter:stable
+    
+    # Container name when running (shows in 'docker ps')
+    container_name: calorie_tracker_flutter
+    
+    volumes:
+      # Mount project files (host:container)
+      # Changes sync both ways instantly
+      - .:/app
+      
+      # Cache Gradle dependencies (faster rebuilds)
+      - gradle-cache:/root/.gradle
+      
+      # Cache Flutter/Dart packages
+      - pub-cache:/root/.pub-cache
+    
+    # Working directory inside container
+    working_dir: /app
+    
+    # Required for interactive shell
+    stdin_open: true
+    tty: true
+
+# Named volumes persist between container runs
+# Delete with: docker compose down -v
+volumes:
+  gradle-cache:
+    name: calorie_tracker_gradle
+  pub-cache:
+    name: calorie_tracker_pub
