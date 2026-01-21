@@ -26,6 +26,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final provider = context.read<AppProvider>();
     _stats = await provider.getStatistics();
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
   }
 

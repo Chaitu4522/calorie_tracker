@@ -36,6 +36,7 @@ class _WeeklyScreenState extends State<WeeklyScreen> {
     final provider = context.read<AppProvider>();
     _weeklyTotals = await provider.getWeeklyTotals(_weekStart);
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
   }
 

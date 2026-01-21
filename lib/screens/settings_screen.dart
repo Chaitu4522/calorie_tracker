@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -230,7 +231,7 @@ class SettingsScreen extends StatelessWidget {
       String csvContent;
 
       if (file.bytes != null) {
-        csvContent = String.fromCharCodes(file.bytes!);
+        csvContent = utf8.decode(file.bytes!, allowMalformed: true);
       } else if (file.path != null) {
         csvContent = await File(file.path!).readAsString();
       } else {

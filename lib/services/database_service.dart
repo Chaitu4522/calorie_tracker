@@ -101,6 +101,19 @@ class DatabaseService {
     return await db.insert('entries', entry.toMap());
   }
 
+  /// Add multiple entries in a single transaction.
+  Future<void> addEntries(List<Entry> entries) async {
+    if (entries.isEmpty) return;
+    final db = await database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      for (final entry in entries) {
+        batch.insert('entries', entry.toMap());
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
   /// Update an existing entry.
   Future<void> updateEntry(Entry entry) async {
     final db = await database;

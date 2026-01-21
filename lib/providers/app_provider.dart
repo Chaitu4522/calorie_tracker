@@ -296,21 +296,23 @@ class AppProvider extends ChangeNotifier {
   /// Returns the number of entries imported, or -1 on error.
   Future<int> importData(String csvContent) async {
     try {
-      final lines = csvContent.split('\n');
-      if (lines.isEmpty) return 0;
+      final rows = _parseCsvRows(csvContent);
+      if (rows.isEmpty) return 0;
 
-      int imported = 0;
-      for (int i = 1; i < lines.length; i++) {
-        final line = lines[i].trim();
-        if (line.isEmpty) continue;
+      int startIndex = 0;
+      if (_isHeaderRow(rows.first)) {
+        startIndex = 1;
+      }
 
-        final parsed = _parseCsvLine(line);
-        if (parsed == null) continue;
+      final entries = <Entry>[];
+      for (int i = startIndex; i < rows.length; i++) {
+        final row = rows[i];
+        if (row.length < 4) continue;
 
-        final date = parsed['date']!;
-        final time = parsed['time']!;
-        final description = parsed['description']!;
-        final calories = int.tryParse(parsed['calories']!);
+        final date = row[0].trim();
+        final time = row[1].trim();
+        final description = row[2].trim();
+        final calories = int.tryParse(row[3].trim());
 
         if (calories == null || calories <= 0) continue;
 
@@ -318,68 +320,93 @@ class AppProvider extends ChangeNotifier {
         final timeParts = time.split(':');
         if (dateParts.length != 3 || timeParts.length != 2) continue;
 
-        final timestamp = DateTime(
-          int.parse(dateParts[0]),
-          int.parse(dateParts[1]),
-          int.parse(dateParts[2]),
-          int.parse(timeParts[0]),
-          int.parse(timeParts[1]),
-        );
+        final year = int.tryParse(dateParts[0]);
+        final month = int.tryParse(dateParts[1]);
+        final day = int.tryParse(dateParts[2]);
+        final hour = int.tryParse(timeParts[0]);
+        final minute = int.tryParse(timeParts[1]);
+        if (year == null ||
+            month == null ||
+            day == null ||
+            hour == null ||
+            minute == null) {
+          continue;
+        }
 
-        final entry = Entry(
+        final timestamp = DateTime(year, month, day, hour, minute);
+
+        entries.add(Entry(
           description: description,
           calories: calories,
           timestamp: timestamp,
-        );
-
-        await _db.addEntry(entry);
-        imported++;
+        ));
       }
 
+      if (entries.isEmpty) return 0;
+
+      await _db.addEntries(entries);
       await _loadTodayEntries();
       notifyListeners();
-      return imported;
+      return entries.length;
     } catch (e) {
       debugPrint('Error importing data: $e');
       return -1;
     }
   }
 
-  /// Parse a CSV line handling quoted fields.
-  Map<String, String>? _parseCsvLine(String line) {
-    try {
-      final values = <String>[];
-      bool inQuotes = false;
-      StringBuffer current = StringBuffer();
+  bool _isHeaderRow(List<String> row) {
+    if (row.length < 4) return false;
+    return row[0].toLowerCase() == 'date' &&
+        row[1].toLowerCase() == 'time' &&
+        row[2].toLowerCase() == 'description' &&
+        row[3].toLowerCase() == 'calories';
+  }
 
-      for (int i = 0; i < line.length; i++) {
-        final char = line[i];
-        if (char == '"') {
-          if (inQuotes && i + 1 < line.length && line[i + 1] == '"') {
-            current.write('"');
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (char == ',' && !inQuotes) {
-          values.add(current.toString());
-          current = StringBuffer();
-        } else {
-          current.write(char);
-        }
-      }
-      values.add(current.toString());
+  /// Parse CSV content handling quoted fields and embedded newlines.
+  List<List<String>> _parseCsvRows(String content) {
+    final rows = <List<String>>[];
+    final currentRow = <String>[];
+    var currentField = StringBuffer();
+    bool inQuotes = false;
 
-      if (values.length < 4) return null;
-
-      return {
-        'date': values[0],
-        'time': values[1],
-        'description': values[2],
-        'calories': values[3],
-      };
-    } catch (e) {
-      return null;
+    void endField() {
+      currentRow.add(currentField.toString());
+      currentField = StringBuffer();
     }
+
+    void endRow() {
+      endField();
+      if (currentRow.any((value) => value.isNotEmpty)) {
+        rows.add(List<String>.from(currentRow));
+      }
+      currentRow.clear();
+    }
+
+    for (int i = 0; i < content.length; i++) {
+      final char = content[i];
+      if (char == '"') {
+        if (inQuotes && i + 1 < content.length && content[i + 1] == '"') {
+          currentField.write('"');
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char == ',' && !inQuotes) {
+        endField();
+      } else if (!inQuotes && (char == '\n' || char == '\r')) {
+        if (char == '\r' && i + 1 < content.length && content[i + 1] == '\n') {
+          i++;
+        }
+        endRow();
+      } else {
+        currentField.write(char);
+      }
+    }
+
+    if (currentField.isNotEmpty || currentRow.isNotEmpty) {
+      endRow();
+    }
+
+    return rows;
   }
 }

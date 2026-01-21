@@ -64,6 +64,7 @@ class _AddEntryScreenState extends State<AddEntryScreen>
       );
 
       if (pickedFile != null) {
+        if (!mounted) return;
         setState(() {
           _selectedImage = File(pickedFile.path);
           _hasEstimated = false;
@@ -71,6 +72,7 @@ class _AddEntryScreenState extends State<AddEntryScreen>
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to pick image. Please try again.';
       });
@@ -94,6 +96,7 @@ class _AddEntryScreenState extends State<AddEntryScreen>
     final apiKey = await provider.getApiKey();
 
     if (apiKey == null || apiKey.isEmpty) {
+      if (!mounted) return;
       setState(() {
         _isEstimating = false;
         _errorMessage = 'API key not found. Please update in Settings.';
