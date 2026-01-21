@@ -2,11 +2,12 @@
 # dev.sh - Helper script for Docker-based Flutter development
 #
 # Usage:
-#   ./dev.sh shell    - Start interactive shell
-#   ./dev.sh build    - Build release APK
-#   ./dev.sh analyze  - Run Flutter analyze
-#   ./dev.sh clean    - Clean build artifacts
-#   ./dev.sh purge    - Remove all cached data
+#   ./dev.sh setup     - First time setup (generate icons, get deps)
+#   ./dev.sh shell     - Start interactive shell
+#   ./dev.sh build     - Build release APK
+#   ./dev.sh analyze   - Run Flutter analyze
+#   ./dev.sh clean     - Clean build artifacts
+#   ./dev.sh purge     - Remove all cached data
 
 set -e
 
@@ -29,6 +30,27 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 case "${1:-help}" in
+    setup)
+        echo -e "${GREEN}Running first-time setup...${NC}"
+        echo ""
+        
+        # Generate icons if missing
+        if [ ! -f "android/app/src/main/res/mipmap-hdpi/ic_launcher.png" ]; then
+            echo -e "${CYAN}Generating launcher icons...${NC}"
+            docker compose run --rm flutter python3 scripts/generate_icons.py
+        else
+            echo -e "${CYAN}Launcher icons already exist, skipping...${NC}"
+        fi
+        
+        echo ""
+        echo -e "${CYAN}Getting Flutter dependencies...${NC}"
+        docker compose run --rm flutter flutter pub get
+        
+        echo ""
+        echo -e "${GREEN}✓ Setup complete!${NC}"
+        echo -e "Run ${CYAN}./dev.sh build${NC} to build the APK"
+        ;;
+
     shell|sh|s)
         echo -e "${GREEN}Starting Flutter development shell...${NC}"
         echo -e "${CYAN}Tip: Run 'flutter pub get' first if dependencies are missing${NC}"
@@ -96,19 +118,21 @@ case "${1:-help}" in
         echo "Usage: ./dev.sh <command>"
         echo ""
         echo "Commands:"
-        echo "  shell, sh, s    Start interactive shell in container"
-        echo "  build, b        Build release APK"
-        echo "  analyze, a      Run Flutter analyze"
-        echo "  test, t         Run Flutter tests"
-        echo "  clean, c        Clean build artifacts"
-        echo "  purge, p        Remove containers and all cached data"
-        echo "  update, u       Pull latest Flutter Docker image"
-        echo "  doctor, d       Run Flutter doctor"
-        echo "  help, h         Show this help"
+        echo "  setup         First-time setup (icons, dependencies)"
+        echo "  shell, sh, s  Start interactive shell in container"
+        echo "  build, b      Build release APK"
+        echo "  analyze, a    Run Flutter analyze"
+        echo "  test, t       Run Flutter tests"
+        echo "  clean, c      Clean build artifacts"
+        echo "  purge, p      Remove containers and all cached data"
+        echo "  update, u     Pull latest Flutter Docker image"
+        echo "  doctor, d     Run Flutter doctor"
+        echo "  help, h       Show this help"
         echo ""
-        echo "Examples:"
-        echo "  ./dev.sh shell          # Enter container, then run Flutter commands"
-        echo "  ./dev.sh build          # Quick build without entering shell"
+        echo "First time? Run:"
+        echo "  docker compose pull   # Download Flutter image (~3GB)"
+        echo "  ./dev.sh setup        # Generate icons & get dependencies"
+        echo "  ./dev.sh build        # Build the APK"
         echo ""
         echo "APK output location:"
         echo "  build/app/outputs/flutter-apk/app-release.apk"
